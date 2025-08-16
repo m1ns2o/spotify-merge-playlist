@@ -23,7 +23,7 @@ async function getAllTrackUris(
       limit: 50,
       offset,
     });
-    response.body.items.forEach((item) => {
+    response.body.items.forEach((item: SpotifyApi.PlaylistTrackObject) => {
       if (item.track && item.track.uri && item.track.type === "track") {
         trackUris.add(item.track.uri);
       }
@@ -55,11 +55,18 @@ export default defineEventHandler(async (event) => {
     accessToken,
   });
 
-  const { urls } = await readBody(event);
+  const { urls, mergeMode } = await readBody(event);
   if (!urls || urls.length < 2) {
     throw createError({
       statusCode: 400,
       message: "플레이리스트 URL이 2개 이상 필요합니다.",
+    });
+  }
+
+  if (!mergeMode || !['intersection', 'union'].includes(mergeMode)) {
+    throw createError({
+      statusCode: 400,
+      message: "병합 방식(mergeMode)은 'intersection' 또는 'union'이어야 합니다.",
     });
   }
 
@@ -80,76 +87,41 @@ export default defineEventHandler(async (event) => {
 
     // --- 3. 새로운 플레이리스트 생성 ---
     const me = await spotifyApi.getMe();
-    const newPlaylistName = `[통합] ${playlistInfos[0].name} & ${playlistInfos[1].name}`;
+    const modeText = mergeMode === 'intersection' ? '교집합' : '합집합';
+    const newPlaylistName = `[${modeText}] ${playlistInfos[0].name} & ${playlistInfos[1].name}`;
     const newPlaylist = await spotifyApi.createPlaylist(newPlaylistName, {
-      description: `${playlistInfos.map(p => `'${p.name}'`).join(', ')}의 중복 곡과 추천 곡 모음`,
+      description: `${playlistInfos.map(p => `'${p.name}'`).join(', ')}의 ${modeText} 병합`,
       public: true,
     });
 
-    // --- 4. 중복 곡 찾기 및 추가 ---
-    let duplicateUris: string[] = [];
-    if (allTrackSets.length > 0) {
+    // --- 4. 병합 방식에 따른 곡 선택 및 추가 ---
+    let tracksToAdd: string[] = [];
+    
+    if (mergeMode === 'intersection') {
+      // 교집합: 모든 플레이리스트에 공통으로 있는 곡들
+      if (allTrackSets.length > 0) {
         const firstSet = allTrackSets[0];
         const otherSets = allTrackSets.slice(1);
-        duplicateUris = [...firstSet].filter(uri => otherSets.every(set => set.has(uri)));
+        tracksToAdd = [...firstSet].filter(uri => otherSets.every(set => set.has(uri)));
+      }
+    } else {
+      // 합집합: 모든 플레이리스트의 곡들을 중복 없이
+      const allUris = new Set<string>();
+      allTrackSets.forEach(trackSet => {
+        trackSet.forEach(uri => allUris.add(uri));
+      });
+      tracksToAdd = [...allUris];
     }
     
-    if (duplicateUris.length > 0) {
+    if (tracksToAdd.length > 0) {
       // Spotify API limit: max 100 tracks per request
-      for (let i = 0; i < duplicateUris.length; i += 100) {
-        const chunk = duplicateUris.slice(i, i + 100);
+      for (let i = 0; i < tracksToAdd.length; i += 100) {
+        const chunk = tracksToAdd.slice(i, i + 100);
         await spotifyApi.addTracksToPlaylist(newPlaylist.body.id, chunk);
       }
     }
     
-    // --- 5. 중복되지 않은 곡으로 추천받기 및 추가 ---
-    const allUris = new Set(allTrackSets.flatMap(s => [...s]));
-    const uniqueTracks = [...allUris].filter(uri => !duplicateUris.includes(uri));
-    
-    const seedTracks = uniqueTracks
-        .map((uri) => uri.split(":").pop()!)
-        .slice(0, 5);
-
-    if (seedTracks.length > 0) {
-        let recommendations: SpotifyApi.RecommendationsFromSeedsResponse | null = null;
-        try {
-          // 1st attempt: up to 5 seed tracks
-          const resp = await spotifyApi.getRecommendations({
-            seed_tracks: seedTracks,
-            limit: 20,
-            min_popularity: 40,
-          });
-          recommendations = resp.body;
-        } catch (e1: any) {
-          console.warn("Recommendations attempt 1 failed:", e1?.body || e1?.message || e1);
-          try {
-            // 2nd attempt: single seed track
-            const resp2 = await spotifyApi.getRecommendations({
-              seed_tracks: seedTracks.slice(0, 1),
-              limit: 20,
-              min_popularity: 40,
-            });
-            recommendations = resp2.body;
-          } catch (e2: any) {
-            console.warn("Recommendations attempt 2 failed, skipping recommendations.", e2?.body || e2?.message || e2);
-          }
-        }
-
-        if (recommendations) {
-          const recommendedUris = recommendations.tracks
-            .map((track) => track.uri)
-            .filter((uri) => !allUris.has(uri));
-
-          if (recommendedUris.length > 0) {
-            for (let i = 0; i < recommendedUris.length; i += 100) {
-              const chunk = recommendedUris.slice(i, i + 100);
-              await spotifyApi.addTracksToPlaylist(newPlaylist.body.id, chunk);
-            }
-          }
-        }
-    }
-    
-    // --- 6. 성공 결과 반환 ---
+    // --- 5. 성공 결과 반환 ---
     return { playlistUrl: newPlaylist.body.external_urls.spotify };
 
   } catch (error: any) {
