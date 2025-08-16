@@ -49,37 +49,45 @@
 					<p class="text-sm text-neutral-500">총 {{ playlistUrls.length }}개</p>
 					<UButton color="neutral" variant="ghost" size="xs" icon="i-heroicons-trash" @click="clearAll" />
 				</div>
-				<div class="flex flex-wrap gap-2">
-					<div
-						v-for="(url, index) in playlistUrls"
-						:key="url + index"
-						class="flex items-center gap-2 px-3 py-2 rounded-md bg-neutral-100 dark:bg-neutral-800 max-w-full"
-					>
-						<UBadge color="success" variant="soft">{{ index + 1 }}</UBadge>
-						<span class="text-sm truncate max-w-[32ch]" :title="url">{{ url }}</span>
-						<UButton
-							@click="removeUrl(index)"
-							color="error"
-							variant="ghost"
-							icon="i-heroicons-x-mark-20-solid"
-							size="xs"
-						/>
-					</div>
-				</div>
 
 				<!-- Previews -->
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-					<UCard v-for="(url, idx) in playlistUrls" :key="'preview-' + url + idx">
-						<template #header>
-							<span class="text-sm font-medium truncate" :title="previews[url]?.title || url">
-								{{ previews[url]?.title || '미리보기 로딩 중...' }}
-							</span>
-						</template>
-						<div class="aspect-video overflow-hidden rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-							<img v-if="previews[url]?.thumbnail_url" :src="previews[url]?.thumbnail_url" alt="preview" class="w-full h-full object-cover" />
+				<div class="space-y-2 mt-3">
+					<div 
+						v-for="(url, idx) in playlistUrls" 
+						:key="'preview-' + url + idx"
+						class="flex items-center gap-3 p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700"
+					>
+						<!-- Thumbnail -->
+						<div class="w-12 h-12 rounded-md overflow-hidden bg-neutral-100 dark:bg-neutral-800 flex-shrink-0">
+							<img 
+								v-if="previews[url]?.thumbnail_url" 
+								:src="previews[url]?.thumbnail_url" 
+								alt="playlist thumbnail" 
+								class="w-full h-full object-cover" 
+							/>
 							<USkeleton v-else class="w-full h-full" />
 						</div>
-					</UCard>
+						
+						<!-- Playlist name -->
+						<div class="flex-grow min-w-0">
+							<p class="text-sm font-medium truncate" :title="previews[url]?.title || url">
+								{{ previews[url]?.title || '미리보기 로딩 중...' }}
+							</p>
+							<p class="text-xs text-neutral-500 truncate" :title="url">
+								{{ url }}
+							</p>
+						</div>
+						
+						<!-- Delete button -->
+						<UButton
+							@click="removeUrl(idx)"
+							color="error"
+							variant="ghost"
+							icon="i-heroicons-trash"
+							size="xs"
+							class="flex-shrink-0"
+						/>
+					</div>
 				</div>
 			</div>
 			<div v-else class="text-center text-neutral-500 mb-4">
@@ -203,11 +211,33 @@ const pasteFromClipboard = async () => {
 		
 		if (trimmedText) {
 			newUrl.value = trimmedText;
-			toast.add({ 
-				title: "클립보드에서 붙여넣기 완료", 
-				description: "URL을 확인하고 추가 버튼을 눌러주세요.",
-				color: "success" 
-			});
+			
+			// Automatically add if it's a valid URL
+			if (isValidPlaylistUrl(trimmedText)) {
+				if (playlistUrls.value.includes(trimmedText)) {
+					toast.add({ 
+						title: "중복 URL", 
+						description: "이미 추가된 URL입니다.",
+						color: "warning" 
+					});
+				} else {
+					playlistUrls.value.push(trimmedText);
+					newUrl.value = "";
+					resultPlaylistUrl.value = null;
+					void fetchPreview(trimmedText);
+					toast.add({ 
+						title: "플레이리스트 추가 완료", 
+						description: "클립보드에서 URL을 자동으로 추가했습니다.",
+						color: "success" 
+					});
+				}
+			} else {
+				toast.add({ 
+					title: "유효하지 않은 URL", 
+					description: "Spotify 플레이리스트 URL을 입력해주세요.",
+					color: "error" 
+				});
+			}
 		} else {
 			toast.add({ 
 				title: "클립보드가 비어있음", 
