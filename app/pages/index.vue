@@ -3,17 +3,17 @@
 		<header class="mb-4">
 			<h1 class="text-2xl font-bold flex items-center gap-2">
 				<i class="i-simple-icons-spotify text-emerald-500" />
-				Spotify Playlist Merger
+				{{ $t('app.title') }}
 			</h1>
 			<p class="text-sm text-neutral-500 mt-1">
-				여러 플레이리스트를 교집합 또는 합집합으로 병합합니다.
+				{{ $t('app.description') }}
 			</p>
 		</header>
 
 		<UCard>
 			<template #header>
 				<div class="flex items-center justify-between">
-					<span class="font-semibold">플레이리스트 URL 추가</span>
+					<span class="font-semibold">{{ $t('playlist.addTitle') }}</span>
 					<UButton
 						color="neutral"
 						variant="soft"
@@ -21,7 +21,7 @@
 						icon="i-heroicons-information-circle"
 						@click="
 							toast.add({
-								title: '예시',
+								title: $t('playlist.exampleToast.title'),
 								description: 'https://open.spotify.com/playlist/...',
 							})
 						"
@@ -48,12 +48,12 @@
 						/>
 					</template>
 				</UInput>
-				<UButton @click="addUrl" label="추가" :disabled="!newUrl" />
+				<UButton @click="addUrl" :label="$t('playlist.addButton')" :disabled="!newUrl" />
 			</div>
 
 			<div v-if="playlistUrls.length" class="space-y-2 mb-4">
 				<div class="flex items-center justify-between">
-					<p class="text-sm text-neutral-500">총 {{ playlistUrls.length }}개</p>
+					<p class="text-sm text-neutral-500">{{ $t('playlist.totalCount', { count: playlistUrls.length }) }}</p>
 					<UButton
 						color="neutral"
 						variant="ghost"
@@ -89,7 +89,7 @@
 								class="text-sm font-medium truncate"
 								:title="previews[url]?.title || url"
 							>
-								{{ previews[url]?.title || "미리보기 로딩 중..." }}
+								{{ previews[url]?.title || $t('playlist.loadingPreview') }}
 							</p>
 							<p class="text-xs text-neutral-500 truncate" :title="url">
 								{{ url }}
@@ -109,12 +109,12 @@
 				</div>
 			</div>
 			<div v-else class="text-center text-neutral-500 mb-4">
-				<p>병합할 플레이리스트 URL을 2개 이상 추가해주세요.</p>
+				<p>{{ $t('playlist.addAtLeastTwo') }}</p>
 			</div>
 
 			<!-- Merge mode selection -->
 			<div v-if="playlistUrls.length >= 2" class="mb-6 text-center">
-				<UFormGroup label="병합 방식" class="mb-4">
+				<UFormGroup :label="$t('merge.modeTitle')" class="mb-4">
 					<div class="flex items-center justify-center gap-4">
 						<span
 							class="text-sm font-medium"
@@ -124,15 +124,12 @@
 									: 'text-neutral-500'
 							"
 						>
-							합집합 (모든 곡)
+							{{ $t('merge.union') }}
 						</span>
 						<USwitch 
 							v-model="toggleValue" 
 							size="md"
-							:ui="{
-								active: 'bg-primary-500 dark:bg-primary-400',
-								inactive: 'bg-neutral-200 dark:bg-neutral-700'
-							}"
+							
 						/>
 						<span
 							class="text-sm font-medium"
@@ -142,7 +139,7 @@
 									: 'text-neutral-500'
 							"
 						>
-							교집합 (공통 곡만)
+							{{ $t('merge.intersection') }}
 						</span>
 					</div>
 				</UFormGroup>
@@ -152,17 +149,11 @@
 						class="flex items-center justify-center gap-2"
 					>
 						<span>∩</span>
-						<span
-							><strong>교집합:</strong> 모든 플레이리스트에 공통으로 있는 곡들만
-							포함됩니다.</span
-						>
+						<span>{{ $t('merge.intersectionDescription') }}</span>
 					</p>
 					<p v-else class="flex items-center justify-center gap-2">
 						<span>∪</span>
-						<span
-							><strong>합집합:</strong> 모든 플레이리스트의 곡들을 중복 없이
-							모두 포함됩니다.</span
-						>
+						<span>{{ $t('merge.unionDescription') }}</span>
 					</p>
 				</div>
 			</div>
@@ -186,7 +177,7 @@
 
 			<UAlert
 				v-if="resultPlaylistUrl"
-				:title="`병합 완료!`"
+				:title="$t('success.title')"
 				icon="i-heroicons-check-circle"
 				color="primary"
 				variant="solid"
@@ -194,12 +185,12 @@
 			>
 				<template #description>
 					<p>
-						새로운 플레이리스트가 생성되었습니다!
+						{{ $t('success.description') }}
 						<a
 							:href="resultPlaylistUrl"
 							target="_blank"
 							class="underline font-bold"
-							>여기서 확인하세요.</a
+							>{{ $t('success.link') }}</a
 						>
 					</p>
 				</template>
@@ -207,7 +198,7 @@
 		</UCard>
 
 		<footer class="mt-6 text-center text-xs text-neutral-500">
-			Spotify Web API 기반 · 개인정보 저장 없음
+			{{ $t('app.footer') }}
 		</footer>
 
 		<!-- Nuxt UI Toasts -->
@@ -230,7 +221,7 @@ const playlistUrls = ref<string[]>([
 ]);
 const isLoading = ref(false);
 const resultPlaylistUrl = ref<string | null>(null);
-const loadingLabel = ref("요청 준비 중...");
+const loadingLabel = ref("");
 const elapsed = ref(0);
 let timer: any = null;
 
@@ -267,16 +258,16 @@ const addUrl = () => {
 	if (!url) return;
 	if (!isValidPlaylistUrl(url)) {
 		toast.add({
-			title: "유효하지 않은 URL",
-			description: "Spotify 플레이리스트 URL을 입력해주세요.",
+			title: t("error.invalidUrl.title"),
+			description: t("error.invalidUrl.description"),
 			color: "error",
 		});
 		return;
 	}
 	if (playlistUrls.value.includes(url)) {
 		toast.add({
-			title: "중복 URL",
-			description: "이미 추가된 URL입니다.",
+			title: t("error.duplicateUrl.title"),
+			description: t("error.duplicateUrl.description"),
 			color: "warning",
 		});
 		return;
@@ -311,8 +302,8 @@ const pasteFromClipboard = async () => {
 			if (isValidPlaylistUrl(trimmedText)) {
 				if (playlistUrls.value.includes(trimmedText)) {
 					toast.add({
-						title: "중복 URL",
-						description: "이미 추가된 URL입니다.",
+						title: t("error.duplicateUrl.title"),
+						description: t("error.duplicateUrl.description"),
 						color: "warning",
 					});
 				} else {
@@ -321,58 +312,60 @@ const pasteFromClipboard = async () => {
 					resultPlaylistUrl.value = null;
 					void fetchPreview(trimmedText);
 					toast.add({
-						title: "플레이리스트 추가 완료",
-						description: "클립보드에서 URL을 자동으로 추가했습니다.",
+						title: t("clipboard.pasteSuccess.title"),
+						description: t("clipboard.pasteSuccess.description"),
 						color: "success",
 					});
 				}
 			} else {
 				toast.add({
-					title: "유효하지 않은 URL",
-					description: "Spotify 플레이리스트 URL을 입력해주세요.",
+					title: t("error.invalidUrl.title"),
+					description: t("error.invalidUrl.description"),
 					color: "error",
 				});
 			}
 		} else {
 			toast.add({
-				title: "클립보드가 비어있음",
-				description: "클립보드에 URL을 복사한 후 다시 시도해주세요.",
+				title: t("clipboard.empty.title"),
+				description: t("clipboard.empty.description"),
 				color: "warning",
 			});
 		}
 	} catch (error) {
 		toast.add({
-			title: "붙여넣기 실패",
-			description: "클립보드 접근 권한을 확인해주세요.",
+			title: t("clipboard.failed.title"),
+			description: t("clipboard.failed.description"),
 			color: "error",
 		});
 	}
 };
 
+const { t } = useI18n()
+
 const getMergeButtonLabel = () => {
 	if (mergeMode.value === "intersection") {
-		return "교집합으로 플레이리스트 병합";
+		return t("merge.buttonIntersection");
 	} else {
-		return "합집합으로 플레이리스트 병합";
+		return t("merge.buttonUnion");
 	}
 };
 
 const mergePlaylists = async () => {
 	if (playlistUrls.value.length < 2) {
 		toast.add({
-			title: "최소 2개 필요",
-			description: "2개 이상의 플레이리스트 URL을 추가해주세요.",
+			title: t("error.minimumRequired.title"),
+			description: t("error.minimumRequired.description"),
 			color: "warning",
 		});
 		return;
 	}
 	isLoading.value = true;
-	loadingLabel.value = "서버에 요청 전송 중...";
+	loadingLabel.value = t("loading.preparing");
 	elapsed.value = 0;
 	if (timer) clearInterval(timer);
 	timer = setInterval(() => {
 		elapsed.value += 1;
-		if (elapsed.value > 2) loadingLabel.value = "병합 처리 중...";
+		if (elapsed.value > 2) loadingLabel.value = t("loading.processing");
 	}, 1000);
 	resultPlaylistUrl.value = null;
 	try {
@@ -385,10 +378,12 @@ const mergePlaylists = async () => {
 			},
 		});
 		resultPlaylistUrl.value = response.playlistUrl;
-		const modeText = mergeMode.value === "intersection" ? "교집합" : "합집합";
+		const modeText = mergeMode.value === "intersection" 
+			? t("merge.intersection") 
+			: t("merge.union");
 		toast.add({
-			title: "병합 완료",
-			description: `${modeText} 방식으로 새 플레이리스트가 생성되었습니다.`,
+			title: t("success.title"),
+			description: t("success.modeComplete", { mode: modeText }),
 		});
 	} catch (error: any) {
 		console.error("병합 중 오류 발생:", error);
@@ -399,13 +394,13 @@ const mergePlaylists = async () => {
 			return;
 		}
 		toast.add({
-			title: "병합 실패",
-			description: "서버 로그를 확인해주세요.",
+			title: t("error.mergeFailed.title"),
+			description: t("error.mergeFailed.description"),
 			color: "error",
 		});
 	} finally {
 		isLoading.value = false;
-		loadingLabel.value = "완료";
+		loadingLabel.value = t("loading.complete");
 		if (timer) clearInterval(timer);
 	}
 };

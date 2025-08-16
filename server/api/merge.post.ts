@@ -87,10 +87,10 @@ export default defineEventHandler(async (event) => {
 
     // --- 3. 새로운 플레이리스트 생성 ---
     const me = await spotifyApi.getMe();
-    const modeText = mergeMode === 'intersection' ? '교집합' : '합집합';
-    const newPlaylistName = `[${modeText}] ${playlistInfos[0].name} & ${playlistInfos[1].name}`;
+    // const modeText = mergeMode === 'intersection' ? '교집합' : '합집합';
+    const newPlaylistName = `${playlistInfos[0].name} & ${playlistInfos[1].name}`;
     const newPlaylist = await spotifyApi.createPlaylist(newPlaylistName, {
-      description: `${playlistInfos.map(p => `'${p.name}'`).join(', ')}의 ${modeText} 병합`,
+      description: `${playlistInfos.map(p => `'${p.name}'`).join(', ')}의 ${mergeMode} 병합`,
       public: true,
     });
 
@@ -108,7 +108,7 @@ export default defineEventHandler(async (event) => {
       // 합집합: 모든 플레이리스트의 곡들을 중복 없이
       const allUris = new Set<string>();
       allTrackSets.forEach(trackSet => {
-        trackSet.forEach(uri => allUris.add(uri));
+        trackSet.forEach((uri: string) => allUris.add(uri));
       });
       tracksToAdd = [...allUris];
     }

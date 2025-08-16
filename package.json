@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@nuxt/ui": "^3.3.2",
+    "@nuxtjs/i18n": "^10.0.5",
     "nuxt": "^4.0.3",
     "spotify-web-api-node": "^5.0.2",
     "typescript": "^5.9.2",

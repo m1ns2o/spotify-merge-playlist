@@ -1,0 +1,76 @@
+{
+  "app": {
+    "title": "Spotify Playlist Merger",
+    "description": "Merge multiple playlists using intersection or union operations.",
+    "footer": "Based on Spotify Web API · No personal data storage"
+  },
+  "playlist": {
+    "addTitle": "Add Playlist URLs",
+    "urlPlaceholder": "https://open.spotify.com/playlist/...",
+    "addButton": "Add",
+    "totalCount": "Total {count}",
+    "loadingPreview": "Loading preview...",
+    "addAtLeastTwo": "Please add at least 2 playlist URLs to merge.",
+    "exampleToast": {
+      "title": "Example",
+      "description": "https://open.spotify.com/playlist/..."
+    }
+  },
+  "merge": {
+    "modeTitle": "Merge Mode",
+    "union": "Union (All Songs)",
+    "intersection": "Intersection (Common Songs)",
+    "unionDescription": "Union: Includes all songs from all playlists without duplicates.",
+    "intersectionDescription": "Intersection: Includes only songs that exist in all playlists.",
+    "buttonUnion": "Merge Playlists with Union",
+    "buttonIntersection": "Merge Playlists with Intersection"
+  },
+  "loading": {
+    "preparing": "Preparing request...",
+    "processing": "Processing merge...",
+    "complete": "Complete"
+  },
+  "success": {
+    "title": "Merge Complete!",
+    "description": "A new playlist has been created!",
+    "link": "Check it out here.",
+    "modeComplete": "New playlist created with {mode} mode."
+  },
+  "error": {
+    "invalidUrl": {
+      "title": "Invalid URL",
+      "description": "Please enter a valid Spotify playlist URL."
+    },
+    "duplicateUrl": {
+      "title": "Duplicate URL",
+      "description": "This URL has already been added."
+    },
+    "minimumRequired": {
+      "title": "Minimum 2 Required",
+      "description": "Please add at least 2 playlist URLs."
+    },
+    "mergeFailed": {
+      "title": "Merge Failed",
+      "description": "Please check the server logs."
+    }
+  },
+  "clipboard": {
+    "pasteSuccess": {
+      "title": "Playlist Added",
+      "description": "URL automatically added from clipboard."
+    },
+    "empty": {
+      "title": "Clipboard Empty",
+      "description": "Please copy a URL to clipboard and try again."
+    },
+    "failed": {
+      "title": "Paste Failed",
+      "description": "Please check clipboard access permissions."
+    }
+  },
+  "language": {
+    "switch": "Switch Language",
+    "korean": "한국어",
+    "english": "English"
+  }
+}
