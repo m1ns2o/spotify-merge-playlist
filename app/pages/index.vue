@@ -1,7 +1,7 @@
 <template>
 	<div class="max-w-3xl mx-auto p-4">
 		<header class="mb-4">
-			<h1 class="text-2xl font-bold flex items-center gap-2">
+			<h1 class="text-2xl font-bold flex items-center2">
 				<i class="i-simple-icons-spotify text-emerald-500" />
 				{{ $t('app.title') }}
 			</h1>
